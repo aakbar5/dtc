@@ -290,4 +290,7 @@ struct dt_info *dt_from_source(const char *f);
 
 struct dt_info *dt_from_fs(const char *dirname);
 
+extern int merge_dts_files;        /* merge dts files */
+extern int ignore_dead_aliases; 	/* Ignore dead aliases */
+
 #endif /* DTC_H */

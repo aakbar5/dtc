@@ -137,6 +137,15 @@ Options:
 	Ensure the blob at least <bytes> long, adding additional
 	space if needed.
 
+    -m
+    Merge multiple DTS files. This option is useful to see full DTS tree
+    in a single file. It keeps device names/aliases in their original
+    format.
+
+    -g
+    This option is useful in conjunction with -m. It asks to ignore
+    dead aliases otherwise error will be generated.
+
     -v
 	Print DTC version and exit.
 

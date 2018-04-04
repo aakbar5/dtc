@@ -67,70 +67,76 @@ static void write_propval_string(FILE *f, struct data val)
 	int i;
 	struct marker *m = val.markers;
 
-	assert(str[val.len-1] == '\0');
-
-	while (m && (m->offset == 0)) {
-		if (m->type == LABEL)
-			fprintf(f, "%s: ", m->ref);
-		m = m->next;
+    // user original alias instead phandle for dts merge option
+	if (merge_dts_files == 1 && m && m->type == REF_PATH) {
+		fprintf(f, "&%s", m->ref);
 	}
-	fprintf(f, "\"");
+	else {
+		assert(str[val.len-1] == '\0');
 
-	for (i = 0; i < (val.len-1); i++) {
-		char c = str[i];
-
-		switch (c) {
-		case '\a':
-			fprintf(f, "\\a");
-			break;
-		case '\b':
-			fprintf(f, "\\b");
-			break;
-		case '\t':
-			fprintf(f, "\\t");
-			break;
-		case '\n':
-			fprintf(f, "\\n");
-			break;
-		case '\v':
-			fprintf(f, "\\v");
-			break;
-		case '\f':
-			fprintf(f, "\\f");
-			break;
-		case '\r':
-			fprintf(f, "\\r");
-			break;
-		case '\\':
-			fprintf(f, "\\\\");
-			break;
-		case '\"':
-			fprintf(f, "\\\"");
-			break;
-		case '\0':
-			fprintf(f, "\", ");
-			while (m && (m->offset <= (i + 1))) {
-				if (m->type == LABEL) {
-					assert(m->offset == (i+1));
-					fprintf(f, "%s: ", m->ref);
-				}
-				m = m->next;
-			}
-			fprintf(f, "\"");
-			break;
-		default:
-			if (isprint((unsigned char)c))
-				fprintf(f, "%c", c);
-			else
-				fprintf(f, "\\x%02hhx", c);
+		while (m && (m->offset == 0)) {
+			if (m->type == LABEL)
+				fprintf(f, "%s: ", m->ref);
+			m = m->next;
 		}
-	}
-	fprintf(f, "\"");
+		fprintf(f, "\"");
 
-	/* Wrap up any labels at the end of the value */
-	for_each_marker_of_type(m, LABEL) {
-		assert (m->offset == val.len);
-		fprintf(f, " %s:", m->ref);
+		for (i = 0; i < (val.len-1); i++) {
+			char c = str[i];
+
+			switch (c) {
+			case '\a':
+				fprintf(f, "\\a");
+				break;
+			case '\b':
+				fprintf(f, "\\b");
+				break;
+			case '\t':
+				fprintf(f, "\\t");
+				break;
+			case '\n':
+				fprintf(f, "\\n");
+				break;
+			case '\v':
+				fprintf(f, "\\v");
+				break;
+			case '\f':
+				fprintf(f, "\\f");
+				break;
+			case '\r':
+				fprintf(f, "\\r");
+				break;
+			case '\\':
+				fprintf(f, "\\\\");
+				break;
+			case '\"':
+				fprintf(f, "\\\"");
+				break;
+			case '\0':
+				fprintf(f, "\", ");
+				while (m && (m->offset <= (i + 1))) {
+					if (m->type == LABEL) {
+						assert(m->offset == (i+1));
+						fprintf(f, "%s: ", m->ref);
+					}
+					m = m->next;
+				}
+				fprintf(f, "\"");
+				break;
+			default:
+				if (isprint((unsigned char)c))
+					fprintf(f, "%c", c);
+				else
+					fprintf(f, "\\x%02hhx", c);
+			}
+		}
+		fprintf(f, "\"");
+
+		/* Wrap up any labels at the end of the value */
+		for_each_marker_of_type(m, LABEL) {
+			assert (m->offset == val.len);
+			fprintf(f, " %s:", m->ref);
+		}
 	}
 }
 
@@ -141,26 +147,34 @@ static void write_propval_cells(FILE *f, struct data val)
 	struct marker *m = val.markers;
 
 	fprintf(f, "<");
-	for (;;) {
-		while (m && (m->offset <= ((char *)cp - val.val))) {
-			if (m->type == LABEL) {
-				assert(m->offset == ((char *)cp - val.val));
-				fprintf(f, "%s: ", m->ref);
+
+    // user original alias instead phandle for dts merge option
+	if (merge_dts_files == 1 && m && (m->type == REF_PHANDLE || m->type == REF_PATH)) {
+		fprintf(f, "&%s", m->ref);
+	}
+	else {
+		for (;;) {
+			while (m && (m->offset <= ((char *)cp - val.val))) {
+				if (m->type == LABEL) {
+					assert(m->offset == ((char *)cp - val.val));
+					fprintf(f, "%s: ", m->ref);
+				}
+				m = m->next;
 			}
-			m = m->next;
+
+			fprintf(f, "0x%x", fdt32_to_cpu(*cp++));
+			if ((void *)cp >= propend)
+				break;
+			fprintf(f, " ");
 		}
 
-		fprintf(f, "0x%x", fdt32_to_cpu(*cp++));
-		if ((void *)cp >= propend)
-			break;
-		fprintf(f, " ");
+		/* Wrap up any labels at the end of the value */
+		for_each_marker_of_type(m, LABEL) {
+			assert (m->offset == val.len);
+			fprintf(f, " %s:", m->ref);
+		}
 	}
 
-	/* Wrap up any labels at the end of the value */
-	for_each_marker_of_type(m, LABEL) {
-		assert (m->offset == val.len);
-		fprintf(f, " %s:", m->ref);
-	}
 	fprintf(f, ">");
 }
 

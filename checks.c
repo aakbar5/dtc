@@ -560,7 +560,7 @@ static void fixup_phandle_references(struct check *c, struct dt_info *dti,
 
 			refnode = get_node_by_ref(dt, m->ref);
 			if (! refnode) {
-				if (!(dti->dtsflags & DTSF_PLUGIN))
+				if ((ignore_dead_aliases == 0) && (!(dti->dtsflags & DTSF_PLUGIN)))
 					FAIL(c, dti, "Reference to non-existent node or "
 							"label \"%s\"\n", m->ref);
 				else /* mark the entry as unresolved */
