@@ -22,6 +22,7 @@ int generate_fixups;		/* suppress generation of fixups on symbol support */
 int auto_label_aliases;		/* auto generate labels -> aliases */
 int annotate;		/* Level of annotation: 1 for input source location
 			   >1 for full input source location. */
+int merge_dts_files;        /* merge dts files */
 
 static int is_power_of_2(int x)
 {
@@ -47,7 +48,7 @@ static void fill_fullpaths(struct node *tree, const char *prefix)
 
 /* Usage related data. */
 static const char usage_synopsis[] = "dtc [options] <input file>";
-static const char usage_short_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@LAThv";
+static const char usage_short_opts[] = "qI:O:o:V:d:R:S:p:a:fb:i:H:sW:E:@LAThvm";
 static struct option const usage_long_opts[] = {
 	{"quiet",            no_argument, NULL, 'q'},
 	{"in-format",         a_argument, NULL, 'I'},
@@ -72,6 +73,7 @@ static struct option const usage_long_opts[] = {
 	{"annotate",         no_argument, NULL, 'T'},
 	{"help",             no_argument, NULL, 'h'},
 	{"version",          no_argument, NULL, 'v'},
+	{"merge",            no_argument, NULL, 'm'},
 	{NULL,               no_argument, NULL, 0x0},
 };
 static const char * const usage_opts_help[] = {
@@ -108,6 +110,7 @@ static const char * const usage_opts_help[] = {
 	"\n\tPossibly generates a __local_fixups__ and a __fixups__ node at the root node",
 	"\n\tEnable auto-alias of labels",
 	"\n\tAnnotate output .dts with input source file and line (-T -T for more details)",
+	"\n\tMerge multiple DTS files (Useful to see full DTS tree in a single file)",
 	"\n\tPrint this help and exit",
 	"\n\tPrint version and exit",
 	NULL,
@@ -264,6 +267,10 @@ int main(int argc, char *argv[])
 			break;
 		case 'T':
 			annotate++;
+			break;
+
+		case 'm':
+			merge_dts_files = 1;
 			break;
 
 		case 'h':

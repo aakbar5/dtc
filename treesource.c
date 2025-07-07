@@ -46,8 +46,14 @@ static bool isstring(char c)
 		|| strchr("\a\b\t\n\v\f\r", c));
 }
 
-static void write_propval_string(FILE *f, const char *s, size_t len)
+static void write_propval_string(FILE *f, const char *s, size_t len, enum markertype mtype, char *mref)
 {
+	// user original alias instead phandle for dts merge option
+	if (merge_dts_files == 1 && mtype == REF_PATH) {
+		fprintf(f, "&%s", mref);
+		return;
+	}
+
 	const char *end = s + len - 1;
 
 	if (!len)
@@ -99,8 +105,13 @@ static void write_propval_string(FILE *f, const char *s, size_t len)
 	fprintf(f, "\"");
 }
 
-static void write_propval_int(FILE *f, const char *p, size_t len, size_t width)
+static void write_propval_int(FILE *f, const char *p, size_t len, size_t width, enum markertype mtype, char *mref)
 {
+	if (merge_dts_files == 1 && mtype == REF_PHANDLE) {
+		fprintf(f, "&%s", mref);
+		return;
+	}
+
 	const char *end = p + len;
 	assert(len % width == 0);
 
@@ -245,7 +256,7 @@ static void write_propval(FILE *f, struct property *prop)
 
 		switch(emit_type) {
 		case TYPE_UINT16:
-			write_propval_int(f, p, chunk_len, 2);
+			write_propval_int(f, p, chunk_len, 2, m->type, m->ref);
 			break;
 		case TYPE_UINT32:
 			m_phandle = prop->val.markers;
@@ -260,22 +271,22 @@ static void write_propval(FILE *f, struct property *prop)
 					fprintf(f, "&%s", m_phandle->ref);
 				if (chunk_len > 4) {
 					fputc(' ', f);
-					write_propval_int(f, p + 4, chunk_len - 4, 4);
+					write_propval_int(f, p + 4, chunk_len - 4, 4, m->type, m->ref);
 				}
 			} else {
-				write_propval_int(f, p, chunk_len, 4);
+				write_propval_int(f, p, chunk_len, 4, m->type, m->ref);
 			}
 			if (data_len > chunk_len)
 				fputc(' ', f);
 			break;
 		case TYPE_UINT64:
-			write_propval_int(f, p, chunk_len, 8);
+			write_propval_int(f, p, chunk_len, 8, m->type, m->ref);
 			break;
 		case TYPE_STRING:
-			write_propval_string(f, p, chunk_len);
+			write_propval_string(f, p, chunk_len, m->type, m->ref);
 			break;
 		default:
-			write_propval_int(f, p, chunk_len, 1);
+			write_propval_int(f, p, chunk_len, 1, m->type, m->ref);
 		}
 
 		if (chunk_len == data_len) {
