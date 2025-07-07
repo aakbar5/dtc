@@ -8,6 +8,22 @@ dtc and libfdt are maintained by:
 
 * [David Gibson `<david@gibson.dropbear.id.au>`](mailto:david@gibson.dropbear.id.au)
 
+## How to build it?
+
+- Install meson
+  - For Ubuntu (`sudo apt install -y meson`)
+
+- Commands to use build dtc
+```bash
+cd /path/to/source
+
+meson setup output/build -Dpython=disabled --prefix `pwd`/output/install
+meson compile -C output/build
+meson install -C output/build
+```
+
+Incase you are interested in python, remove `-Dpython=disabled` from meson setup.
+
 ## Python library
 
 A Python library wrapping libfdt is also available. To build this you
